@@ -1,0 +1,62 @@
+{
+	"resources": [
+		{
+			"uri": "idescat://instructions",
+			"name": "instructions",
+			"title": "Usage guidelines for Idescat MCP",
+			"description": "Server usage guide (statistic selection, data retrieval flow, JSON-stat interpretation, accuracy, and source attribution). Same content as the 'instructions' header in the handshake.",
+			"mimeType": "text/markdown",
+			"read": { "file": "instructions.md" }
+		},
+		{
+			"uri": "idescat://glossary/geo",
+			"name": "geo-glossary",
+			"title": "Territorial codes glossary (geo)",
+			"description": "Territorial division codes used by the 'geo' parameter (cat, prov, at, com, mun, dis, sec) with their description.",
+			"mimeType": "text/markdown",
+			"read": { "file": "resources/geo.md" }
+		},
+		{
+			"uri": "idescat://catalog/stats",
+			"name": "stats-catalog",
+			"title": "Idescat statistics catalog",
+			"description": "Complete list of statistics (id, name, description, datasets, geo, url). Equivalent to the get_idescat_stats tool but attachable as context.",
+			"mimeType": "application/json",
+			"read": { "tool": "get_idescat_stats", "args": {} }
+		}
+	],
+	"templates": [
+		{
+			"uriTemplate": "idescat://stat/{stat}",
+			"name": "statistic",
+			"title": "Statistic information",
+			"description": "Statistic metadata by acronym (e.g., idescat://stat/censph): name, description, datasets, geo, url, and last update.",
+			"mimeType": "application/json",
+			"read": { "tool": "get_idescat_stat" }
+		},
+		{
+			"uriTemplate": "idescat://stat/{stat}/tables",
+			"name": "statistic-tables",
+			"title": "Statistic tables",
+			"description": "List of tables for a statistic by acronym (e.g., idescat://stat/censph/tables): identifier and name of each table.",
+			"mimeType": "application/json",
+			"read": { "tool": "get_idescat_stat_tables" }
+		},
+		{
+			"uriTemplate": "idescat://table/{stat}/{table}",
+			"name": "table-metadata",
+			"title": "Table metadata",
+			"description": "JSON-stat metadata of a table (e.g., idescat://table/censph/538): dimensions, categories, units, and related territorial divisions.",
+			"mimeType": "application/json",
+			"read": { "tool": "get_table_metadata" }
+		},
+		{
+			"uriTemplate": "idescat://table/{stat}/{table}/data",
+			"name": "table-data",
+			"title": "Table data (JSON-stat)",
+			"description": "Complete table data in JSON-stat format for Catalonia as a whole (e.g., idescat://table/censph/538/data). Returns an error if the table exceeds 20,000 cells; in this case, use the get_table_data tool with filters (filters, last).",
+			"mimeType": "application/json",
+			"read": { "tool": "get_table_data" }
+		}
+	]
+}
