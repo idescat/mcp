@@ -187,7 +187,7 @@ convention so agents can find it automatically:
   `text/event-stream` returns `405`, since this stateless server offers no SSE
   stream.
 - The MCP server card is also served at
-  `https://www.idescat.cat/.well-known/mcp/server-card.json`, which redirects
+  `https://www.idescat.cat/.well-known/mcp/server-card.json` (and `https://www.idescat.cat/.well-known/mcp.json`), which redirects
   to `https://api.idescat.cat/mcp`.
 - The website pages also include a link to the manifest:
   `<link rel="ai-catalog" href="https://www.idescat.cat/.well-known/ai-catalog.json" type="application/json">`.
