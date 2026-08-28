@@ -176,11 +176,12 @@ unchanged, to MCP clients:
 ## Discovery (Agentic Resource Discovery)
 
 The server is advertised using the **Agentic Resource Discovery (ARD)**
-convention so agents can find it automatically:
+specification (v0.91) so agents can find it automatically:
 
-- A capability manifest is published at
-  `https://www.idescat.cat/.well-known/ai-catalog.json` and
-  `https://api.idescat.cat/.well-known/ai-catalog.json`.
+- An ARD manifest is published at
+  `https://www.idescat.cat/.well-known/ard.json` and
+  `https://api.idescat.cat/.well-known/ard.json`. The legacy predecessor path
+  (`/.well-known/ai-catalog.json`) is redirected (301) to the new manifest.
 - A `GET` request to the endpoint `https://api.idescat.cat/mcp` returns the
   **MCP server card** (`application/mcp-server-card+json`), generated from the
   server's tool and resource definitions. A `GET` requesting
@@ -190,7 +191,8 @@ convention so agents can find it automatically:
   `https://www.idescat.cat/.well-known/mcp/server-card.json` (and `https://www.idescat.cat/.well-known/mcp.json`), which redirects
   to `https://api.idescat.cat/mcp`.
 - The website pages also include a link to the manifest:
-  `<link rel="ai-catalog" href="https://www.idescat.cat/.well-known/ai-catalog.json" type="application/json">`.
+  `<link rel="ard" href="/.well-known/ard.json" type="application/json">`
+  (the `ard` link relation replaces the predecessor `ai-catalog` relation).
 - `robots.txt` includes an `Agentmap:` directive pointing to the manifest.
 - The MCP server is also advertised in the site's `llms.txt` file.
 
@@ -211,3 +213,7 @@ Select the "Streamable HTTP" transport and enter the endpoint URL.
 
 - Idescat: <https://www.idescat.cat>
 - Model Context Protocol: <https://modelcontextprotocol.io>
+- MCP specification (2025-06-18, Streamable HTTP transport): <https://modelcontextprotocol.io/specification/2025-06-18>
+- Agentic Resource Discovery (ARD): <https://agenticresourcediscovery.org>
+- ARD specification (rendered): <https://agenticresourcediscovery.org/spec/>
+- ARD specification repository (schemas, conformance tooling): <https://github.com/ards-project/ard-spec>
