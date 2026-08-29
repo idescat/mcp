@@ -172,6 +172,11 @@ unchanged, to MCP clients:
 - **[`resources/geo.md`](resources/geo.md)** — glossary of territorial codes
   (`cat`, `prov`, `at`, `com`, `mun`, `dis`, `sec`) used by the `geo` parameter,
   exposed as the `idescat://glossary/geo` resource.
+- **[`server.json`](server.json)** — the server's metadata manifest in the
+  standard
+  [server.json format](https://github.com/modelcontextprotocol/registry/blob/main/docs/reference/server-json/generic-server-json.md),
+  used to publish the server to the official
+  [MCP Registry](https://registry.modelcontextprotocol.io).
 
 ## Discovery (Agentic Resource Discovery)
 
@@ -195,6 +200,16 @@ specification (v0.91) so agents can find it automatically:
   (the `ard` link relation replaces the predecessor `ai-catalog` relation).
 - `robots.txt` includes an `Agentmap:` directive pointing to the manifest.
 - The MCP server is also advertised in the site's `llms.txt` file.
+
+### MCP Registry
+
+The server is listed in the official
+[MCP Registry](https://registry.modelcontextprotocol.io) under the name
+`cat.idescat/mcp` (see [`server.json`](server.json)). MCP clients and
+aggregators can retrieve its metadata from the registry API:
+
+    https://registry.modelcontextprotocol.io/v0.1/servers/cat.idescat%2Fmcp
+
 
 ## Interactive testing with MCP Inspector
 
