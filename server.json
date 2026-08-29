@@ -1,0 +1,18 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "cat.idescat/mcp",
+  "title": "Idescat MCP Server",
+  "description": "Query official statistics of Catalonia (Idescat): tables, metadata and JSON-stat data via MCP.",
+  "version": "1.0.0",
+  "repository": {
+    "url": "https://github.com/idescat/mcp",
+    "source": "github"
+  },
+  "websiteUrl": "https://www.idescat.cat/",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://api.idescat.cat/mcp"
+    }
+  ]
+}
