@@ -187,6 +187,11 @@ specification (v0.91) so agents can find it automatically:
   `https://www.idescat.cat/.well-known/ard.json` and
   `https://api.idescat.cat/.well-known/ard.json`. The legacy predecessor path
   (`/.well-known/ai-catalog.json`) is redirected (301) to the new manifest.
+  The manifest advertises two entries: this MCP server
+  (`application/mcp-server-card+json`) and the
+  [Idescat Tables API](https://www.idescat.cat/dev/api/taules/), described by
+  its OpenAPI document (`application/openapi+json`) at
+  `https://www.idescat.cat/dev/api/taules/openapi.json`.
 - A `GET` request to the endpoint `https://api.idescat.cat/mcp` returns the
   **MCP server card** (`application/mcp-server-card+json`), generated from the
   server's tool and resource definitions. A `GET` requesting
