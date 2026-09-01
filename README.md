@@ -254,7 +254,7 @@ Select the "Streamable HTTP" transport and enter the endpoint URL.
 
 - Idescat: <https://www.idescat.cat>
 - Model Context Protocol: <https://modelcontextprotocol.io>
-- MCP specification (2025-06-18, Streamable HTTP transport): <https://modelcontextprotocol.io/specification/2025-06-18>
+- MCP specification (2026-07-28, Streamable HTTP transport): <https://modelcontextprotocol.io/specification/2026-07-28>
 - Agentic Resource Discovery (ARD): <https://agenticresourcediscovery.org>
 - ARD specification (rendered): <https://agenticresourcediscovery.org/spec/>
 - ARD specification repository (schemas, conformance tooling): <https://github.com/ards-project/ard-spec>
