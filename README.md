@@ -156,6 +156,18 @@ Resource templates (`resources/templates/list`) — parametrised URIs:
 > The transport is stateless, so `subscribe` and `resources/list_changed`
 > notifications are **not** offered (there is no persistent connection).
 
+## Agent skills
+
+Two skills in the [Agent Skills](https://agentskills.io/) open format (a
+directory with a `SKILL.md` file: YAML frontmatter + Markdown instructions)
+teach agents how to use Idescat data correctly. They are published on the
+website and advertised in the [ARD manifest](#discovery-agentic-resource-discovery):
+
+| Skill | URL | Description |
+| --- | --- | --- |
+| `jsonstat` | <https://www.idescat.cat/dev/api/taules/jsonstat/SKILL.md> | How to read JSON-stat 2.0 datasets: dimension index, row-major order, stride/offset arithmetic, `null` and `status` handling. Generic — useful with any JSON-stat producer. |
+| `workflow` | <https://www.idescat.cat/dev/api/taules/workflow/SKILL.md> | How to query Idescat data reliably (via this MCP server or the Tables API): choosing the statistic and territorial level, metadata-first flow, the 20,000-cell limit and filters, and mandatory source citation. |
+
 ## Repository files
 
 The following files define the server's guidance and resources and are served,
@@ -172,11 +184,18 @@ unchanged, to MCP clients:
 - **[`resources/geo.md`](resources/geo.md)** — glossary of territorial codes
   (`cat`, `prov`, `at`, `com`, `mun`, `dis`, `sec`) used by the `geo` parameter,
   exposed as the `idescat://glossary/geo` resource.
+
+The repository also includes:
+
 - **[`server.json`](server.json)** — the server's metadata manifest in the
   standard
   [server.json format](https://github.com/modelcontextprotocol/registry/blob/main/docs/reference/server-json/generic-server-json.md),
   used to publish the server to the official
   [MCP Registry](https://registry.modelcontextprotocol.io).
+- **[`jsonstat/SKILL.md`](jsonstat/SKILL.md)** and
+  **[`workflow/SKILL.md`](workflow/SKILL.md)** — the two
+  [agent skills](#agent-skills), also published on the website under
+  `https://www.idescat.cat/dev/api/taules/`.
 
 ## Discovery (Agentic Resource Discovery)
 
@@ -187,11 +206,13 @@ specification (v0.91) so agents can find it automatically:
   `https://www.idescat.cat/.well-known/ard.json` and
   `https://api.idescat.cat/.well-known/ard.json`. The legacy predecessor path
   (`/.well-known/ai-catalog.json`) is redirected (301) to the new manifest.
-  The manifest advertises two entries: this MCP server
-  (`application/mcp-server-card+json`) and the
+  The manifest advertises four entries: this MCP server
+  (`application/mcp-server-card+json`), the
   [Idescat Tables API](https://www.idescat.cat/dev/api/taules/), described by
   its OpenAPI document (`application/openapi+json`) at
-  `https://www.idescat.cat/dev/api/taules/openapi.json`.
+  `https://www.idescat.cat/dev/api/taules/openapi.json`, and the two
+  [agent skills](#agent-skills)
+  (`text/markdown; profile="urn:air:agent-skills"`).
 - A `GET` request to the endpoint `https://api.idescat.cat/mcp` returns the
   **MCP server card** (`application/mcp-server-card+json`), generated from the
   server's tool and resource definitions. A `GET` requesting
