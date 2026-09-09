@@ -5,7 +5,7 @@ statistics of Catalonia, published by **Idescat** (Institut d'Estadística de
 Catalunya), from any MCP client (Claude, Windsurf, Cursor, VS Code, etc.).
 
 - **Public endpoint:** `https://api.idescat.cat/mcp`
-- **Transport:** Streamable HTTP (MCP spec 2025-06-18), **stateless** — each POST request is independent, with no sessions or SSE streams.
+- **Transport:** Streamable HTTP (MCP spec 2025-06-18), **stateless** — each POST request is independent, with no sessions. POST responses use JSON or SSE according to the client's `Accept` header; no persistent SSE stream is offered via GET.
 - **Authentication:** none required (the data is public).
 - **Data:** official Idescat statistics in **JSON-stat**; labels and descriptions are in **Catalan**; territorial scope is **Catalonia** and its territorial breakdowns (counties, municipalities, provinces, etc.).
 
@@ -215,12 +215,20 @@ specification (v0.91) so agents can find it automatically:
   (`text/markdown; profile="urn:air:agent-skills"`).
 - A `GET` request to the endpoint `https://api.idescat.cat/mcp` returns the
   **MCP server card** (`application/mcp-server-card+json`), generated from the
-  server's tool and resource definitions. A `GET` requesting
-  `text/event-stream` returns `405`, since this stateless server offers no SSE
-  stream.
-- The MCP server card is also served at
-  `https://www.idescat.cat/.well-known/mcp/server-card.json` (and `https://www.idescat.cat/.well-known/mcp.json`), which redirects
-  to `https://api.idescat.cat/mcp`.
+  server's identity and transport configuration. The Card and the MCP
+  handshake (`serverInfo`) share the name `cat.idescat/mcp`, matching the
+  MCP Registry. A `GET` requesting `text/event-stream` returns `405`:
+  the server offers no SSE stream via GET, although POST responses can use SSE.
+- `https://api.idescat.cat/mcp/server-card` is a discovery alias: GET/HEAD
+  requests redirect (307) to `https://api.idescat.cat/mcp`, where GET returns
+  the Card. This follows the `<streamable-http-url>/server-card` location
+  recommended by the current experimental
+  [Server Card discovery specification](https://github.com/modelcontextprotocol/ext-server-card/blob/main/docs/discovery.md).
+  The ARD manifest continues to point directly to `https://api.idescat.cat/mcp`,
+  avoiding an extra redirect. The transport endpoint is unchanged.
+- The legacy Card aliases `/.well-known/mcp/server-card.json` and
+  `/.well-known/mcp.json` remain available on both `www.idescat.cat` and
+  `api.idescat.cat`, redirecting (307) to `https://api.idescat.cat/mcp`.
 - The website pages also include a link to the manifest:
   `<link rel="ard" href="/.well-known/ard.json" type="application/json">`
   (the `ard` link relation replaces the predecessor `ai-catalog` relation).
@@ -234,7 +242,7 @@ The server is listed in the official
 `cat.idescat/mcp` (see [`server.json`](server.json)). MCP clients and
 aggregators can retrieve its metadata from the registry API:
 
-    https://registry.modelcontextprotocol.io/v0.1/servers/cat.idescat%2Fmcp
+    https://registry.modelcontextprotocol.io/v0.1/servers/cat.idescat%2Fmcp/versions/latest
 
 
 ## Interactive testing with MCP Inspector
@@ -254,7 +262,7 @@ Select the "Streamable HTTP" transport and enter the endpoint URL.
 
 - Idescat: <https://www.idescat.cat>
 - Model Context Protocol: <https://modelcontextprotocol.io>
-- MCP specification (2026-07-28, Streamable HTTP transport): <https://modelcontextprotocol.io/specification/2026-07-28>
+- MCP specification (2025-06-18, Streamable HTTP transport): <https://modelcontextprotocol.io/specification/2025-06-18>
 - Agentic Resource Discovery (ARD): <https://agenticresourcediscovery.org>
 - ARD specification (rendered): <https://agenticresourcediscovery.org/spec/>
 - ARD specification repository (schemas, conformance tooling): <https://github.com/ards-project/ard-spec>
