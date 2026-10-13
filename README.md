@@ -127,9 +127,9 @@ of them at once:
 | `get_idescat_stat` | Information about a statistic (by acronym: `censph`, `pibc`, ...). |
 | `get_idescat_stat_tables` | List of tables of a statistic. |
 | `get_table_metadata` | Table metadata (dimensions, categories, units, ...). |
-| `get_table_data` | Table data in JSON-stat: full, or filtered by dimension/territory/periods with the optional `filters` and `last` parameters (max. 20,000 cells after applying filters). |
+| `get_table_data` | Table data in JSON-stat: full, or filtered by dimension/territory/periods with the optional `filters` and `last` parameters (max. 20,000 cells after applying filters). Supports server-side calculations: age-range filters (`">=65"`), `sum` of a dimension's categories and `derive` (share / difference / percent_change). |
 | `get_table_geo` | Territorial divisions available for a table (`cat`, `prov`, `com`, `mun`, ...). |
-| `render_table` | Ready-pivoted Markdown table (selectable rows/columns) with an attribution link to the table on the Idescat website. |
+| `render_table` | Ready-pivoted Markdown table (selectable rows/columns) with an attribution link to the table on the Idescat website. Accepts the same calculations as `get_table_data` (age-range filters, `sum`, `derive`) and reports them in a "Calculations:" block under the table. |
 
 ## Available resources
 
@@ -155,6 +155,43 @@ Resource templates (`resources/templates/list`) — parametrised URIs:
 
 > The transport is stateless, so `subscribe` and `resources/list_changed`
 > notifications are **not** offered (there is no persistent connection).
+
+## Server-side calculations
+
+Language models are notoriously unreliable at mental arithmetic on long series
+of values. `get_table_data` and `render_table` therefore accept three optional
+parameters that make the server compute the result deterministically instead
+of leaving the model to add, subtract or divide the returned values itself:
+
+```json
+{ "filters": { "AGE": ">=65", "SEX": "TOTAL" }, "last": 1 }
+{ "sum": ["AGE"] }
+{ "derive": { "share": "AGE", "percent_change": "previous" } }
+```
+
+- **Age-range filters.** For dimensions coded `Y000`, `Y005_009`, `Y_GE100`,
+  etc., a filter value can be a range expression (`">=65"`, `">65"`, `"<16"`,
+  `"<=15"`, `"16-64"`); the server resolves it to the exact list of codes and
+  fails with `range_not_representable` when the published groups cannot express
+  the bound exactly.
+- **`sum`** collapses the listed dimensions by adding up their categories; the
+  result is a single `SUM` category. `TOTAL` is excluded automatically.
+- **`derive`** appends derived metrics to the metric dimension:
+  `share` (`<METRIC>_SHARE` = 100 × value / value at `TOTAL` of the given
+  dimension), `difference` (`<METRIC>_DIFF` vs. the previous or a given period)
+  and `percent_change` (`<METRIC>_PCT` = 100 × (value − base) / base).
+
+The engine relies on Idescat's conventions: additivity is declared by
+`extension["%"]` on the metric dimension (only additive metrics can be summed
+or shared), `TOTAL` is the total code, and non-computable cells come back as
+`null` with status `d`. Everything applied is recorded in `extension.derived`
+(ranges, summed codes, formulas, warnings) and `render_table` prints it under
+the table as a `Calculations:` block.
+
+Unsafe requests are refused: `metric_not_additive`, `geo_not_summable` (the
+territorial dimension is never summed — use the `geo` parameter with the
+division that already publishes the aggregate), `range_not_representable`,
+`incomplete_data` and `total_not_available`.
 
 ## Agent skills
 
@@ -204,31 +241,42 @@ specification (v0.91) so agents can find it automatically:
 
 - An ARD manifest is published at
   `https://www.idescat.cat/.well-known/ard.json` and
-  `https://api.idescat.cat/.well-known/ard.json`. The legacy predecessor path
-  (`/.well-known/ai-catalog.json`) is redirected (301) to the new manifest.
+  `https://api.idescat.cat/.well-known/ard.json` (served with
+  `Access-Control-Allow-Origin: *` on both hosts). It carries a top-level
+  `specVersion` so the same document is valid both as an ARD manifest and as
+  an [AI Catalog](https://github.com/Agent-Card/ai-catalog) file:
+  `/.well-known/ai-catalog.json` is served directly by an internal rewrite of
+  `ard.json` (no redirect) as `application/ai-catalog+json` — the predecessor
+  format that some MCP discovery flows still request first.
   The manifest advertises four entries: this MCP server
   (`application/mcp-server-card+json`), the
   [Idescat Tables API](https://www.idescat.cat/dev/api/taules/), described by
   its OpenAPI document (`application/openapi+json`) at
   `https://www.idescat.cat/dev/api/taules/openapi.json`, and the two
   [agent skills](#agent-skills)
-  (`text/markdown; profile="urn:air:agent-skills"`).
-- A `GET` request to the endpoint `https://api.idescat.cat/mcp` returns the
-  **MCP server card** (`application/mcp-server-card+json`), generated from the
-  server's identity and transport configuration. The Card and the MCP
+  (`application/agent-skills+md`, the AI Catalog media type for a skill
+  published as a Markdown `SKILL.md` file).
+- The **MCP server card** (`application/mcp-server-card+json`) is served at
+  `https://api.idescat.cat/mcp/server-card`, the location the experimental
+  [Server Card discovery specification](https://github.com/modelcontextprotocol/ext-server-card/blob/main/docs/discovery.md)
+  reserves as `<streamable-http-url>/server-card`. A `GET` (or `HEAD`) on the
+  bare endpoint `https://api.idescat.cat/mcp` returns `405` — the endpoint is
+  POST-only, although POST responses can use SSE. The Card and the MCP
   handshake (`serverInfo`) share the name `cat.idescat/mcp`, matching the
-  MCP Registry. A `GET` requesting `text/event-stream` returns `405`:
-  the server offers no SSE stream via GET, although POST responses can use SSE.
-- `https://api.idescat.cat/mcp/server-card` is a discovery alias: GET/HEAD
-  requests redirect (307) to `https://api.idescat.cat/mcp`, where GET returns
-  the Card. This follows the `<streamable-http-url>/server-card` location
-  recommended by the current experimental
-  [Server Card discovery specification](https://github.com/modelcontextprotocol/ext-server-card/blob/main/docs/discovery.md).
-  The ARD manifest continues to point directly to `https://api.idescat.cat/mcp`,
-  avoiding an extra redirect. The transport endpoint is unchanged.
+  MCP Registry. The Card response honours the spec's caching contract:
+  `Cache-Control: public, max-age=3600`, an `ETag` that answers
+  `If-None-Match` with `304`, and CORS headers (`Allow-Methods: GET`,
+  `Allow-Headers: Content-Type, If-None-Match`, `Expose-Headers: ETag`).
 - The legacy Card aliases `/.well-known/mcp/server-card.json` and
-  `/.well-known/mcp.json` remain available on both `www.idescat.cat` and
-  `api.idescat.cat`, redirecting (307) to `https://api.idescat.cat/mcp`.
+  `/.well-known/mcp.json` are served directly on `api.idescat.cat` by an
+  internal rewrite (identical bytes, no redirect — some crawlers do not
+  follow them); on `www.idescat.cat` they redirect (307) to
+  `https://api.idescat.cat/mcp/server-card`.
+- The MCP entry in `ard.json` points to the Card URL and exposes the
+  transport endpoint via `metadata.mcpEndpoint`
+  (`https://api.idescat.cat/mcp`). It uses `application/mcp-server-card+json`:
+  the older `application/mcp-server+json` media type was deprecated in
+  [ARD ADR-0008](https://github.com/ards-project/ard-spec/blob/main/adr/0008-mcp-media-type-renaming.md).
 - The website pages also include a link to the manifest:
   `<link rel="ard" href="/.well-known/ard.json" type="application/json">`
   (the `ard` link relation replaces the predecessor `ai-catalog` relation).
