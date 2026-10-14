@@ -5,7 +5,7 @@ statistics of Catalonia, published by **Idescat** (Institut d'Estadística de
 Catalunya), from any MCP client (Claude, Windsurf, Cursor, VS Code, etc.).
 
 - **Public endpoint:** `https://api.idescat.cat/mcp`
-- **Transport:** Streamable HTTP (MCP spec 2025-06-18), **stateless** — each POST request is independent, with no sessions. POST responses use JSON or SSE according to the client's `Accept` header; no persistent SSE stream is offered via GET.
+- **Transport:** Streamable HTTP (MCP spec 2026-07-28, per-request metadata and `server/discover`, with legacy `initialize` compatibility for 2025-11-25 and earlier), **stateless** — each POST request is independent, with no sessions. POST responses use JSON or SSE according to the client's `Accept` header; no persistent SSE stream is offered via GET.
 - **Authentication:** none required (the data is public).
 - **Data:** official Idescat statistics in **JSON-stat**; labels and descriptions are in **Catalan**; territorial scope is **Catalonia** and its territorial breakdowns (counties, municipalities, provinces, etc.).
 
@@ -118,6 +118,21 @@ of them at once:
 	}
 }
 ```
+
+## Protocol versions
+
+The server is **dual-era** ([MCP versioning](https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning)):
+
+| Era | Protocol versions | How the version is chosen | Behaviour |
+| --- | --- | --- | --- |
+| Legacy | `2025-11-25`, `2025-06-18`, `2025-03-26`, `2024-11-05` | `initialize` negotiation | Exactly as before: JSON-RPC in → JSON-RPC out, `ping`, `initialize`; errors keep HTTP 200 (`-32002` for a missing resource). |
+| Modern | `2026-07-28` | `params._meta["io.modelcontextprotocol/protocolVersion"]` on every request (or `server/discover`) | Results carry `resultType: "complete"`, `_meta` serverInfo, and `ttlMs`/`cacheScope` on cacheable methods. `initialize`/`ping` don't exist here (`-32601` → HTTP 404); a missing resource is `-32602`; an unsupported version is `-32022`; header violations are `-32020` (HTTP 400). |
+
+Modern requests must also send matching headers: `MCP-Protocol-Version`
+(equal to the `_meta` version), `Mcp-Method` (equal to the JSON-RPC method),
+and `Mcp-Name` for `tools/call` (the tool name) and `resources/read` (the
+URI; UTF-8 values may use the `=?base64?...?=` sentinel). `Origin` is always
+accepted — the data is public and the API answers CORS `*`.
 
 ## Available tools
 
@@ -310,7 +325,8 @@ Select the "Streamable HTTP" transport and enter the endpoint URL.
 
 - Idescat: <https://www.idescat.cat>
 - Model Context Protocol: <https://modelcontextprotocol.io>
-- MCP specification (2025-06-18, Streamable HTTP transport): <https://modelcontextprotocol.io/specification/2025-06-18>
+- MCP specification (2026-07-28, Streamable HTTP transport): <https://modelcontextprotocol.io/specification/2026-07-28>
+- MCP versioning (dual-era servers): <https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning>
 - Agentic Resource Discovery (ARD): <https://agenticresourcediscovery.org>
 - ARD specification (rendered): <https://agenticresourcediscovery.org/spec/>
 - ARD specification repository (schemas, conformance tooling): <https://github.com/ards-project/ard-spec>
