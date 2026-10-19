@@ -134,6 +134,12 @@ and `Mcp-Name` for `tools/call` (the tool name) and `resources/read` (the
 URI; UTF-8 values may use the `=?base64?...?=` sentinel). `Origin` is always
 accepted — the data is public and the API answers CORS `*`.
 
+Modern clients may open `subscriptions/listen`: the server answers on an SSE
+stream with `notifications/subscriptions/acknowledged` carrying an empty
+filter (no notification types are supported — the server is stateless and the
+listings don't change), followed by the gradual close defined by the spec.
+Clients should rely on `ttlMs` instead.
+
 ## Available tools
 
 | Tool | Description |
